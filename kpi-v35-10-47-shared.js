@@ -1,6 +1,6 @@
 (()=>{
   'use strict';
-  const VERSION='35.10.47';
+  const VERSION='35.10.48';
   const API='/api/kpi';
   const PRIMARY='dws_kpi_daily_v5';
   const LEGACY='dws_kpi_daily_v4';
@@ -104,8 +104,12 @@
       return /^\d{4}-\d{2}-\d{2}$/.test(d)&&d>='2026-10-01';
     });
 
-    if(!remote.length&&localFuture.length){
-      try{remote=await apiPost(localFuture)}catch(e){console.error('Migração KPI:',e)}
+    if(localFuture.length){
+      const remoteDates=new Set(remote.map(r=>String(r?.date||'')));
+      const pendingLocal=localFuture.filter(r=>!remoteDates.has(String(r?.date||'')));
+      if(pendingLocal.length){
+        try{remote=await apiPost(pendingLocal)}catch(e){console.error('Migração KPI:',e)}
+      }
     }
 
     shared=clone(remote);

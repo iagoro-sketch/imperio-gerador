@@ -63,6 +63,18 @@ export default {
       });
     }
 
-    return env.ASSETS.fetch(request);
+    const asset = await env.ASSETS.fetch(request);
+    if (url.pathname === '/' || url.pathname === '/index.html') {
+      const headers = new Headers(asset.headers);
+      headers.set('cache-control', 'no-store, no-cache, must-revalidate');
+      headers.set('pragma', 'no-cache');
+      headers.set('expires', '0');
+      return new Response(asset.body, {
+        status: asset.status,
+        statusText: asset.statusText,
+        headers
+      });
+    }
+    return asset;
   }
 };

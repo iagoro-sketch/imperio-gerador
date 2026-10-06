@@ -1,7 +1,23 @@
 {
   "name": "roteirizador",
+  "main": "worker.js",
   "compatibility_date": "2026-09-10",
   "assets": {
-    "directory": "."
-  }
+    "directory": ".",
+    "binding": "ASSETS"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "KPI_STORE",
+        "class_name": "KpiStore"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "kpi-shared-v1",
+      "new_sqlite_classes": ["KpiStore"]
+    }
+  ]
 }

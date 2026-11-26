@@ -17,12 +17,12 @@
 
       return grouped.map(function (item) {
         if (!item || typeof item !== 'object') return item;
-        const code = String(item.code == null ? '' : item.code).trim().replace(/^0+(?=\\d)/, '');
+        const code = String(item.code == null ? '' : item.code).trim().replace(/^0+(?=\d)/, '');
         const knownDescription = productDescriptions[code];
         if (!knownDescription) return item;
 
         const currentDescription = String(item.desc == null ? '' : item.desc).trim();
-        const isPlaceholder = !currentDescription || /^PRODUTO\\s+\\d+$/i.test(currentDescription);
+        const isPlaceholder = !currentDescription || /^PRODUTO\s+\d+$/i.test(currentDescription);
         return isPlaceholder ? Object.assign({}, item, { desc: knownDescription }) : item;
       });
     };
@@ -40,29 +40,29 @@
     let raw = '';
     for (let i = 0; i < bytes.length; i++) raw += String.fromCharCode(bytes[i]);
 
-    const xrefStart = raw.lastIndexOf('\\nxref\\n') + 1;
+    const xrefStart = raw.lastIndexOf('\nxref\n') + 1;
     if (xrefStart <= 0) return bytes;
 
-    const trailerStart = raw.indexOf('trailer\\n', xrefStart);
+    const trailerStart = raw.indexOf('trailer\n', xrefStart);
     if (trailerStart < 0) return bytes;
 
     let body = raw.slice(0, xrefStart);
     const trailer = raw.slice(trailerStart);
     let movedPages = 0;
 
-    const streamPattern = /(\\d+ 0 obj\\n<< \\/Length )(\\d+)( >>\\nstream\\n)([\\s\\S]*?)(endstream\\nendobj\\n)/g;
+    const streamPattern = /(\d+ 0 obj\n<< \/Length )(\d+)( >>\nstream\n)([\s\S]*?)(endstream\nendobj\n)/g;
     body = body.replace(streamPattern, function (_match, prefix, _oldLength, middle, stream, suffix) {
-      const marker = /(?=BT \\/F2 9 Tf 1 0 0 1 [\\d.]+ [\\d.]+ Tm \\(Cliente segmentado:)/g;
+      const marker = /(?=BT \/F2 9 Tf 1 0 0 1 [\d.]+ [\d.]+ Tm \(Cliente segmentado:)/g;
       const adjustedStream = stream.replace(marker, function () {
         movedPages++;
-        return '1 0 0 1 0 -10 cm\\n';
+        return '1 0 0 1 0 -10 cm\n';
       });
       return prefix + adjustedStream.length + middle + adjustedStream + suffix;
     });
 
     if (!movedPages) return bytes;
 
-    const objectMatches = Array.from(body.matchAll(/(\\d+) 0 obj\\n[\\s\\S]*?\\nendobj\\n/g));
+    const objectMatches = Array.from(body.matchAll(/(\d+) 0 obj\n[\s\S]*?\nendobj\n/g));
     if (!objectMatches.length) return bytes;
 
     const offsets = [];
@@ -76,13 +76,13 @@
       if (typeof offsets[id] !== 'number') return bytes;
     }
 
-    let xref = 'xref\\n0 ' + (maxId + 1) + '\\n0000000000 65535 f \\n';
+    let xref = 'xref\n0 ' + (maxId + 1) + '\n0000000000 65535 f \n';
     for (let id = 1; id <= maxId; id++) {
-      xref += String(offsets[id]).padStart(10, '0') + ' 00000 n \\n';
+      xref += String(offsets[id]).padStart(10, '0') + ' 00000 n \n';
     }
 
     const rebuiltXrefOffset = body.length;
-    const rebuiltTrailer = trailer.replace(/startxref\\n\\d+\\n%%EOF\\s*$/, 'startxref\\n' + rebuiltXrefOffset + '\\n%%EOF');
+    const rebuiltTrailer = trailer.replace(/startxref\n\d+\n%%EOF\s*$/, 'startxref\n' + rebuiltXrefOffset + '\n%%EOF');
     if (rebuiltTrailer === trailer) return bytes;
 
     const rebuiltPdf = body + xref + rebuiltTrailer;

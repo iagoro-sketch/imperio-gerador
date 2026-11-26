@@ -15,7 +15,7 @@
       const grouped = originalGroupProducts.apply(this, arguments);
       if (!Array.isArray(grouped)) return grouped;
 
-      return grouped.map(function (item) {
+      const corrected = grouped.map(function (item) {
         if (!item || typeof item !== 'object') return item;
         const code = String(item.code == null ? '' : item.code).trim().replace(/^0+(?=\d)/, '');
         const knownDescription = productDescriptions[code];
@@ -25,6 +25,9 @@
         const isPlaceholder = !currentDescription || /^PRODUTO\s+\d+$/i.test(currentDescription);
         return isPlaceholder ? Object.assign({}, item, { desc: knownDescription }) : item;
       });
+
+      // Reaplica a ordenação alfabética após substituir eventuais placeholders.
+      return corrected.sort((a, b) => String(a.desc || '').localeCompare(String(b.desc || ''), 'pt-BR'));
     };
 
     Object.defineProperty(fixedGroupProducts, '__dwsV351050', { value: true });
